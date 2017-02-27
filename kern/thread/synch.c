@@ -214,8 +214,6 @@ lock_acquire(struct lock *lock)
         // end solution
 
 
-        (void)lock;  // suppress warning until code gets written
-
 	/* Call this once the lock is acquired */
 	HANGMAN_ACQUIRE(&curthread->t_hangman, &lock->lk_hangman);
 }
@@ -233,8 +231,8 @@ lock_release(struct lock *lock)
         lock->lk_holder = NULL;
         wchan_wakeone(lock->lk_wchan);
         spinlock_release(&lock->lk_spinlock);
+        // end solution
 
-        (void)lock;  // suppress warning until code gets written
 }
 
 bool
@@ -274,6 +272,13 @@ cv_create(const char *name)
         }
 
         // add stuff here as needed
+        cv->cv_wchan = wchan_create(cv->cv_name);
+        if(cv->cv_wchan == NULL) {
+                kfree(cv->cv_name);
+                kfree(cv);
+                return NULL;
+        }
+        // end solution
 
         return cv;
 }
@@ -284,6 +289,8 @@ cv_destroy(struct cv *cv)
         KASSERT(cv != NULL);
 
         // add stuff here as needed
+        wchan_destroy(cv->cv_wchan);
+        // end solution
 
         kfree(cv->cv_name);
         kfree(cv);
@@ -293,22 +300,31 @@ void
 cv_wait(struct cv *cv, struct lock *lock)
 {
         // Write this
-        (void)cv;    // suppress warning until code gets written
-        (void)lock;  // suppress warning until code gets written
+        DEBUGASSERT(lock_do_i_hold(lock));
+
+        wchan_lock(cv->cv_wchan);
+        lock_release(lock);
+        wchan_sleep(cv->cv_wchan);
+        lock_acquire(lock);
+        // end solution
 }
 
 void
 cv_signal(struct cv *cv, struct lock *lock)
 {
         // Write this
-	(void)cv;    // suppress warning until code gets written
-	(void)lock;  // suppress warning until code gets written
+        DEBUGASSERT(lock_do_i_hold(lock));
+
+        wchan_wakeone(cv->cv_wchan);
+        // end solution
 }
 
 void
 cv_broadcast(struct cv *cv, struct lock *lock)
 {
-	// Write this
-	(void)cv;    // suppress warning until code gets written
-	(void)lock;  // suppress warning until code gets written
+    	// Write this
+    	DEBUGASSERT(lock_do_i_hold(lock));
+
+        wchan_wakeall(cv->cv_wchan);
+        // end solution
 }
