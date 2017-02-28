@@ -148,6 +148,14 @@ int thread_fork(const char *name, struct proc *proc,
                 void (*func)(void *, unsigned long),
                 void *data1, unsigned long data2);
 
+// begin solution
+/*
+
+*/
+void thread_join(void);
+// end solution
+
+
 /*
  * Cause the current thread to exit.
  * Interrupts need not be disabled.

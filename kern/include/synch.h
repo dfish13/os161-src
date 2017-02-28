@@ -119,6 +119,7 @@ struct cv {
         char *cv_name;
         // add what you need here
         struct wchan *cv_wchan;
+        struct spinlock cv_spinlock;
         // (don't forget to mark things volatile as needed)
 };
 

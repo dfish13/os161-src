@@ -203,10 +203,7 @@ lock_acquire(struct lock *lock)
 
         spinlock_acquire(&lock->lk_spinlock);
         while(lock->lk_holder != NULL) {
-                wchan_lock(lock->lk_wchan);
-                spinlock_release(&lock->lk_spinlock);
-                wchan_sleep(lock->lk_wchan);
-                spinlock_acquire(&lock->lk_spinlock);
+                wchan_sleep(lock->lk_wchan, &lock->lk_spinlock);
         }
 
         lock->lk_holder = curthread;
@@ -229,7 +226,7 @@ lock_release(struct lock *lock)
 
         spinlock_acquire(&lock->lk_spinlock);
         lock->lk_holder = NULL;
-        wchan_wakeone(lock->lk_wchan);
+        wchan_wakeone(lock->lk_wchan, &lock->lk_spinlock);
         spinlock_release(&lock->lk_spinlock);
         // end solution
 
@@ -278,6 +275,9 @@ cv_create(const char *name)
                 kfree(cv);
                 return NULL;
         }
+
+        spinlock_init(&cv->cv_spinlock);
+
         // end solution
 
         return cv;
@@ -302,9 +302,10 @@ cv_wait(struct cv *cv, struct lock *lock)
         // Write this
         DEBUGASSERT(lock_do_i_hold(lock));
 
-        wchan_lock(cv->cv_wchan);
         lock_release(lock);
-        wchan_sleep(cv->cv_wchan);
+        spinlock_acquire(&cv->cv_spinlock);
+        wchan_wakeone(cv->cv_wchan, &cv->cv_spinlock);
+        spinlock_release(&cv->cv_spinlock);
         lock_acquire(lock);
         // end solution
 }
@@ -315,7 +316,9 @@ cv_signal(struct cv *cv, struct lock *lock)
         // Write this
         DEBUGASSERT(lock_do_i_hold(lock));
 
-        wchan_wakeone(cv->cv_wchan);
+        spinlock_acquire(&cv->cv_spinlock);
+        wchan_wakeone(cv->cv_wchan, &cv->cv_spinlock);
+        spinlock_release(&cv->cv_spinlock);
         // end solution
 }
 
@@ -325,6 +328,8 @@ cv_broadcast(struct cv *cv, struct lock *lock)
     	// Write this
     	DEBUGASSERT(lock_do_i_hold(lock));
 
-        wchan_wakeall(cv->cv_wchan);
+        spinlock_acquire(&cv->cv_spinlock);
+        wchan_wakeall(cv->cv_wchan, &cv->cv_spinlock);
+        spinlock_release(&cv->cv_spinlock);
         // end solution
 }

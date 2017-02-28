@@ -92,6 +92,9 @@ int longstress(int, char **);
 int createstress(int, char **);
 int printfile(int, char **);
 
+/* COP4610 proj1 tests */
+int asst1_tests(int, char**);			
+
 /* other tests */
 int kmalloctest(int, char **);
 int kmallocstress(int, char **);

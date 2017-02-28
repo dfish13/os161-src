@@ -500,6 +500,7 @@ static const char *testmenu[] = {
 	"[fs4] FS write stress 2             ",
 	"[fs5] FS long stress                ",
 	"[fs6] FS create stress              ",
+	"[ala] asst1_tests                   ",   //added by COP4610 group
 	NULL
 };
 
@@ -638,6 +639,9 @@ static struct {
 	{ "fs5",	longstress },
 	{ "fs6",	createstress },
 
+	/* COP4610 proj1 unit tests */
+	{ "ala",    asst1_tests },
+	
 	{ NULL, NULL }
 };
 
