@@ -4,7 +4,7 @@
 #include <synch.h>
 #include <thread.h>
 
-#define THREAD_COUNT 10
+#define THREAD_COUNT 5
 
 static struct lock *shared_testing_lock;
 
@@ -15,8 +15,21 @@ static int correct_condition_variable()
 	return 0;
 }
 
+static void thread_join_tester(void *unnecessary, unsigned long thread_num)
+{
+	(void)  unnecessary;
+	kprintf("%ld\n", thread_num);
+}
+
 static int correct_thread_join()
 {
+	for(int i=0; i<THREAD_COUNT; i++)
+	{
+		kprintf("creating thread %d\n", i);
+		thread_fork("correct_thread_join", NULL, thread_join_tester, NULL, i);
+	}
+	thread_join();
+
 	kprintf("correct_thread_join successful\n");
 	return 0;
 }

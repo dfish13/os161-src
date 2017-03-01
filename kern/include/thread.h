@@ -101,6 +101,9 @@ struct thread {
 	bool t_in_interrupt;		/* Are we in an interrupt? */
 	int t_curspl;			/* Current spl*() state */
 	int t_iplhigh_count;		/* # of times IPL has been raised */
+	int t_num_children;			/* # of child threads */
+	struct semaphore *t_csem;	/* pointer to semaphore for thread_join */
+	struct semaphore *t_psem;	/* pointer to parent thread semaphore */
 
 	/*
 	 * Public fields
@@ -148,12 +151,12 @@ int thread_fork(const char *name, struct proc *proc,
                 void (*func)(void *, unsigned long),
                 void *data1, unsigned long data2);
 
-// begin solution
+
 /*
 
 */
 void thread_join(void);
-// end solution
+
 
 
 /*

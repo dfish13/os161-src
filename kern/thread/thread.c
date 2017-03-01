@@ -151,6 +151,9 @@ thread_create(const char *name)
 	thread->t_did_reserve_buffers = false;
 
 	/* If you add to struct thread, be sure to initialize here */
+	thread->t_num_children = 0;
+	thread->t_csem = sem_create(name, 0);
+	thread->t_psem = NULL;
 
 	return thread;
 }
@@ -285,6 +288,8 @@ thread_destroy(struct thread *thread)
 	}
 	threadlistnode_cleanup(&thread->t_listnode);
 	thread_machdep_cleanup(&thread->t_machdep);
+	sem_destroy(thread->t_csem);
+	
 
 	/* sheer paranoia */
 	thread->t_wchan_name = "DESTROYED";
@@ -537,6 +542,10 @@ thread_fork(const char *name,
 		return result;
 	}
 
+	/* increment current thread children count and set new thread semaphore */
+	curthread->t_num_children++;
+	newthread->t_psem = curthread->t_csem;
+
 	/*
 	 * Because new threads come out holding the cpu runqueue lock
 	 * (see notes at bottom of thread_switch), we need to account
@@ -551,6 +560,22 @@ thread_fork(const char *name,
 	thread_make_runnable(newthread, false);
 
 	return 0;
+}
+
+/*
+
+*/
+void
+thread_join(void)
+{
+	int i;
+
+	for(i=0; i < curthread->t_num_children -1; i++)
+	{
+		P(curthread->t_csem);
+	}
+
+	curthread->t_num_children = 0;
 }
 
 /*
@@ -801,6 +826,10 @@ thread_exit(void)
 
 	/* Check the stack guard band. */
 	thread_checkstack(cur);
+
+	/* Increment the parent semaphore indicating thread has completed */
+	if(cur->t_psem != NULL)
+		V(cur->t_psem);
 
 	/* Interrupts off on this processor */
         splhigh();
